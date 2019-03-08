@@ -94,7 +94,9 @@ void next_symbol() {
             if (isdigit(c)) {
 
                 lex_symbol = VALUE;
+                lex_attr = 0;
 
+                //convert string to int
                 do {
                     lex_attr *= 10;
                     lex_attr += c - 48;

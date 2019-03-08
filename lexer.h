@@ -16,6 +16,9 @@ typedef enum {
     SEOF, SERROR
 } Symbol;
 
+/* Nazvy symbolov (len pre ich jednoduchsi vypis) */
+extern const char *SYM_NAMES[];
+
 /* Vystupny symbol lexikalnej analyzy a jeho atribut.
  * Ak symbol je VALUE, atribut obsahuje jeho celociselnu hodnotu,
  * ak je to ID, atribut obsahuje index do tabulky identifikatorov. */

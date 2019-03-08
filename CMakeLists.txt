@@ -3,4 +3,9 @@ project(zadanie)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(zadanie main.cpp lexer.cpp)
+add_executable(zadanie
+        main.c
+        lexer.c
+        interpret.c
+        generator.c
+        )
