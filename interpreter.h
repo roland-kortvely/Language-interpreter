@@ -5,6 +5,7 @@
 
 int match(Symbol expected);
 
+int mul();
 int expr();
 
 int term();

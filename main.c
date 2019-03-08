@@ -8,7 +8,7 @@
 int main(int argc, char** argv)
 {
     printf("Vstupny retazec: ");
-    // Citanie vstupneho retazca
+
     char source[MAX_INPUT_SIZE];
     fgets(source, MAX_INPUT_SIZE, stdin);
 
@@ -22,6 +22,5 @@ int main(int argc, char** argv)
     read();
     print();
 
-    //    getchar();
     return 0;
 }

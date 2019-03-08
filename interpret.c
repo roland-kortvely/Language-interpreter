@@ -66,25 +66,80 @@ int term() {
     return value;
 }
 
-/* Expr -> Term {("+"|"-") Term} */
-int expr() {
+/* Power -> Term {"^"  Power} */
+int power(){
 
     int leftOp, rightOp;
 
-    Symbol operator;
     leftOp = term();
 
-    while (lex_symbol == PLUS || lex_symbol == MINUS) {
+    while (lex_symbol == POWER) {
+
+        next_symbol();
+
+        rightOp = power();
+        leftOp = (int)pow(leftOp, rightOp);
+    }
+
+    return leftOp;
+}
+
+/* Mul -> Power  {("*"|"/")  Power } */
+int mul(){
+
+    int leftOp, rightOp;
+    Symbol operator;
+
+    leftOp = power();
+
+    while(lex_symbol == MUL || lex_symbol == POWER) {
+
         operator = lex_symbol;
         next_symbol();
-        rightOp = term();
+
+        rightOp = power();
+
         switch (operator) {
+
+            case MUL:
+                leftOp = leftOp * rightOp;
+                break;
+            case DIV:
+                leftOp = leftOp / rightOp;
+                break;
+
+            default:
+                assert("Neocakavany operator v mul()");
+        }
+    }
+
+    return leftOp;
+}
+
+/* Expr -> Mul {("+"|"-") Mul} */
+int expr() {
+
+    int leftOp, rightOp;
+    Symbol operator;
+
+    leftOp = mul();
+
+    while (lex_symbol == PLUS || lex_symbol == MINUS || lex_symbol == MUL || lex_symbol == DIV || lex_symbol == POWER) {
+
+        operator = lex_symbol;
+        next_symbol();
+
+        rightOp = mul();
+
+        switch (operator) {
+
             case PLUS:
                 leftOp = leftOp + rightOp;
                 break;
             case MINUS:
                 leftOp = leftOp - rightOp;
                 break;
+
             default:
                 assert("Neocakavany operator v expr()");
         }
