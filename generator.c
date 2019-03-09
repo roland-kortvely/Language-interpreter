@@ -37,16 +37,19 @@ short *code_list;
 // The current end position of our code
 short address;
 
-short get_address(){
+short get_address()
+{
     return address;
 }
 
-void put_word(short value){
+void put_word(short value)
+{
     code_list[address] = value;
     address++;
 }
 
-void put_op_attr(short op, short value){
+void put_op_attr(short op, short value)
+{
     put_word(op);
     put_word(value);
 }
@@ -66,7 +69,8 @@ typedef union {
     } Dword;
 } RealRegister;
 
-void put_real(float arg) {
+void put_real(float arg)
+{
     RealRegister rvalue;
     rvalue.R = arg;
     put_word(rvalue.Dword.RL);
@@ -75,7 +79,8 @@ void put_real(float arg) {
 //Code for real numbers ends here.
 
 // Call this only at the start.
-void init_generator(FILE *output) {
+void init_generator(FILE *output)
+{
     address = 0;
     // We need to initialize our code to NOP instruction, that is why we call calloc().
     code_list = calloc(sizeof(short), MAX_CODE_LENGTH);
@@ -83,50 +88,62 @@ void init_generator(FILE *output) {
 }
 
 // Call this function at the end of process
-void generate_output(){
+void generate_output()
+{
     fwrite(code_list, sizeof(short), (size_t) address, output_stream);
 }
 
-void write_begin(short num_vars) {
+void write_begin(short num_vars)
+{
     // Jump over stored variables
-    put_op_attr(JMP,VAR_OFFSET + num_vars);
+    put_op_attr(JMP, VAR_OFFSET + num_vars);
+
     // Save stack start at your WORK_MEM "register".
     put_word(STACK_START);
+
     // The area, where your variables are stored
     for (int i = 0; i < num_vars; i++) {
         put_word(NOP);
     }
+
     // Set the stack pointer.
-    put_op_attr(LDS,2);
+    put_op_attr(LDS, 2);
 }
 
-void write_end(){
+void write_end()
+{
     put_word(EXIT);
 }
 
-void write_result() {
+void write_result()
+{
     put_word(POP);
     put_word(OUT);
 }
 
-void write_number(short value) {
+void write_number(short value)
+{
     put_op_attr(LDAM, value);
     put_word(PUSH);
 }
 
-void write_string(const char *str){
-    size_t len = strlen( str );
-    for (int i = 0; i < len; i++){
+void write_string(const char *str)
+{
+    size_t len = strlen(str);
+    for (int i = 0; i < len; i++) {
         put_op_attr(LDAM, str[i]);
         put_word(OUTC);
     }
 }
 
-void write_var(short index) {
-    // TODO
+void write_var(short index)
+{
+    put_op_attr(LDA, VAR_OFFSET + index);
+    put_word(PUSH);
 }
 
-void write_add() {
+void write_add()
+{
     put_word(POP);
     put_op_attr(STA, WORK_MEM);
     put_word(POP);
@@ -134,20 +151,43 @@ void write_add() {
     put_word(PUSH);
 }
 
-void write_sub() {
-    // TODO
+void write_sub()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(SUB, WORK_MEM);
+    put_word(PUSH);
 }
 
-void write_mul() {
-    // TODO
+void write_mul()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(MUL, WORK_MEM);
+    put_word(PUSH);
 }
 
-void write_div() {
-    // TODO
+void write_div()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(DIV, WORK_MEM);
+    put_word(PUSH);
 }
 
-void write_ask_var(short index, char *name) {
-    // TODO
+void write_ask_var(short index, char *name)
+{
+    char *buffer = (char *) calloc(strlen(name), sizeof(char));
+    buffer = strcpy(buffer, name);
+    strcat(buffer, " := ");
+
+    write_string(buffer);
+
+    put_word(INP);
+    put_op_attr(STA, VAR_OFFSET + index);
 }
 
 

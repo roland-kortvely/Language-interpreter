@@ -5,27 +5,36 @@
 
 #include "interpreter.h"
 #include "lexer.h"
+#include "generator.h"
 
 /*** Syntakticky analyzator a interpretator ***/
 
-int variables[LEX_IDS_MAX];
+//int variables[LEX_IDS_MAX];
 
 //
-void crash(char *expected) {
+void crash(char *expected)
+{
     fprintf(stderr, "CHYBA: Chyba %s, namiesto toho sa vyskytol %s.\n", expected, symbol_name(lex_symbol));
     exit(1);
 }
 
-void read_variable(int id_idx) {
+void read_variable(int id_idx)
+{
+
+    /*
     int value;
     printf("ID <%d> -> %s = ", id_idx, lex_ids[id_idx]);
     scanf("%d", &value);
     variables[id_idx] = value;
+    */
+
+    write_ask_var((short) id_idx, lex_ids[id_idx]);
 }
 
 /* Overenie symbolu na vstupe a precitanie dalsieho.
  * Vracia atribut overeneho symbolu. */
-int match(const Symbol expected) {
+int match(const Symbol expected)
+{
 
     if (lex_symbol != expected) {
         crash((char *) SYM_NAMES[expected]);
@@ -37,24 +46,28 @@ int match(const Symbol expected) {
 }
 
 /* Term -> VALUE | "(" Expr ")" */
-int term() {
+void term()
+{
     int value = 0;
 
     switch (lex_symbol) {
 
         case VALUE:
             value = lex_attr;
+            write_number((short) value);
             next_symbol();
             break;
 
         case ID:
             next_symbol();
-            value = variables[lex_attr];
+            // value = variables[lex_attr];
+            write_var((short) lex_attr);
             break;
 
         case LPAR:
             next_symbol();
-            value = expr();
+            //value = expr();
+            expr();
             match(RPAR);
             break;
 
@@ -63,81 +76,94 @@ int term() {
             break;
     }
 
-    return value;
+    // return value;
 }
 
 /* Power -> Term {"^"  Power} */
-int power(){
+void power()
+{
 
-    int leftOp, rightOp;
+    //int leftOp, rightOp;
 
-    leftOp = term();
+    //leftOp = term();
+    term();
 
     while (lex_symbol == POWER) {
 
         next_symbol();
 
-        rightOp = power();
-        leftOp = (int)pow(leftOp, rightOp);
+        //rightOp = power();
+        power();
+        //leftOp = (int) pow(leftOp, rightOp);
     }
 
-    return leftOp;
+    //return leftOp;
 }
 
 /* Mul -> Power  {("*"|"/")  Power } */
-int mul(){
+void mul_div()
+{
 
-    int leftOp, rightOp;
+    //int leftOp, rightOp;
     Symbol operator;
 
-    leftOp = power();
+    //leftOp = power();
+    power();
 
-    while(lex_symbol == MUL || lex_symbol == POWER) {
+    while (lex_symbol == MUL || lex_symbol == POWER) {
 
         operator = lex_symbol;
         next_symbol();
 
-        rightOp = power();
+        //rightOp = power();
+        power();
 
         switch (operator) {
 
             case MUL:
-                leftOp = leftOp * rightOp;
+                write_mul();
+                //leftOp = leftOp * rightOp;
                 break;
             case DIV:
-                leftOp = leftOp / rightOp;
+                write_div();
+                //leftOp = leftOp / rightOp;
                 break;
 
             default:
-                assert("Neocakavany operator v mul()");
+                assert("Neocakavany operator v mul_div()");
         }
     }
 
-    return leftOp;
+    //return leftOp;
 }
 
 /* Expr -> Mul {("+"|"-") Mul} */
-int expr() {
+void expr()
+{
 
-    int leftOp, rightOp;
+    //int leftOp, rightOp;
     Symbol operator;
 
-    leftOp = mul();
+    //leftOp = mul_div();
+    mul_div();
 
     while (lex_symbol == PLUS || lex_symbol == MINUS || lex_symbol == MUL || lex_symbol == DIV || lex_symbol == POWER) {
 
         operator = lex_symbol;
         next_symbol();
 
-        rightOp = mul();
+        //rightOp = mul_div();
+        mul_div();
 
         switch (operator) {
 
             case PLUS:
-                leftOp = leftOp + rightOp;
+                write_add();
+                //leftOp = leftOp + rightOp;
                 break;
             case MINUS:
-                leftOp = leftOp - rightOp;
+                write_sub();
+                //leftOp = leftOp - rightOp;
                 break;
 
             default:
@@ -145,11 +171,12 @@ int expr() {
         }
     }
 
-    return leftOp;
+    //return leftOp;
 }
 
 // read -> "read" ID {"," ID}
-void read() {
+void read()
+{
 
     match(READ);
 
@@ -162,8 +189,32 @@ void read() {
 }
 
 // print → "print" expr
-void print() {
+void print()
+{
     match(PRINT);
-    printf("Vysledok: %d\n", expr());
+    //printf("Vysledok: %d\n", expr());
+
+    expr();
+
+    write_result();
 }
 
+void program()
+{
+    while (lex_symbol != SEOF && lex_symbol != SERROR) {
+
+        switch (lex_symbol) {
+
+            case READ:
+                read();
+                break;
+
+            case PRINT:
+                print();
+                break;
+
+            default:
+                break;
+        }
+    }
+}

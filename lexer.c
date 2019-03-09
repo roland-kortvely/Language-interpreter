@@ -63,6 +63,7 @@ void next_symbol() {
     }
 
     switch (c) {
+
         case ',':
             lex_symbol = COMMA;
             break;
@@ -89,7 +90,8 @@ void next_symbol() {
             break;
         case '\0':
             lex_symbol = SEOF;
-            break; // Koniec retazce
+            break; // Koniec retazca
+
         default:
             if (isdigit(c)) {
 

@@ -5,13 +5,15 @@
 
 int match(Symbol expected);
 
-int mul();
-int expr();
+void mul_div();
+void expr();
 
-int term();
+void term();
 
 void print();
 void read();
+
+void program();
 
 void crash(char * expected);
 
