@@ -21,17 +21,30 @@ int main(int argc, char **argv)
 
     write_begin((short) lex_ids_size);
 
+    write_string("\n---START OF EXECUTION---\n");
+    write_string(source);
+
     printf("\nZaciatok syntaxou riadenej interpretacie\n\n");
     init_lexer(source);
     next_symbol();
 
     program();
 
+    write_string("\n---END OF EXECUTION---");
+
     write_end();
 
     generate_output();
     fclose(output_file);
     printf("Program vygenerovany v program.bin\n");
+
+
+    /*
+     * printf("Spustit Computron? [Y|n]");
+     * if (getchar() != 'n') {
+     * system("java -jar ../Computron_VM.jar");
+     * }
+     */
 
     return 0;
 }

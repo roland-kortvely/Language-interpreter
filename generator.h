@@ -16,6 +16,7 @@ void write_add();
 void write_sub();
 void write_mul();
 void write_div();
+void write_power();
 void write_ask_var(short index, char *name);
 void write_string(const char *str);
 

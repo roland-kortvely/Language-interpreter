@@ -82,6 +82,7 @@ void term()
 /* Power -> Term {"^"  Power} */
 void power()
 {
+    Symbol operator;
 
     //int leftOp, rightOp;
 
@@ -90,11 +91,23 @@ void power()
 
     while (lex_symbol == POWER) {
 
+        operator = lex_symbol;
         next_symbol();
 
         //rightOp = power();
         power();
         //leftOp = (int) pow(leftOp, rightOp);
+
+        switch (operator) {
+
+            case POWER:
+                write_power();
+                //leftOp = leftOp * rightOp;
+                break;
+
+            default:
+                assert("Neocakavany operator v power()");
+        }
     }
 
     //return leftOp;

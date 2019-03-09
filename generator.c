@@ -3,9 +3,13 @@
 #include "generator.h"
 
 // Position of additional working memory, something like an additional register you can use.
-#define WORK_MEM (short)2
+#define WORK_MEM (short)0x2
+
+// Position of memory used for power
+#define WORK_MEM_POW (short)0x2000
+
 // The start of the variables area. It is 3, since you already have JMP, its address and WORK_MEM in memory.
-#define VAR_OFFSET (short)3
+#define VAR_OFFSET (short)0x3
 // Maximum size of your code,
 #define MAX_CODE_LENGTH 20000
 // Starting position of our stack.
@@ -129,8 +133,7 @@ void write_number(short value)
 
 void write_string(const char *str)
 {
-    size_t len = strlen(str);
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < strlen(str); i++) {
         put_op_attr(LDAM, str[i]);
         put_word(OUTC);
     }
@@ -144,6 +147,11 @@ void write_var(short index)
 
 void write_add()
 {
+    /**
+     * Move number to stack, load second number,
+     * do addition of number in accumulator with number in stack
+     * push word
+     */
     put_word(POP);
     put_op_attr(STA, WORK_MEM);
     put_word(POP);
@@ -178,10 +186,65 @@ void write_div()
     put_word(PUSH);
 }
 
+void write_power()
+{
+    /**
+     * Example
+     * 2^3
+     */
+
+    //Move 3 to stack
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+
+    //Move 2 to stack, twice
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM_POW);
+    put_op_attr(STA, WORK_MEM_POW + 1);
+
+    //Move to work memory
+    put_op_attr(LDA, WORK_MEM); //A := 3
+
+    //if (A == 0) -> ^0:
+    put_op_attr(BZE, (short) (get_address() + 27));
+
+    put_op_attr(SUBM, 1);  //A := 2
+    short address = get_address();
+
+    //CALC:
+    //if (A == 0) -> SAVE:
+    put_op_attr(BZE, (short) (get_address() + 18));
+
+    put_op_attr(STA, WORK_MEM);         //M[W] := 2             // := 1
+    put_op_attr(LDA, WORK_MEM_POW);     //A := M[POW] := 2      // := 4
+    put_op_attr(MUL, WORK_MEM_POW + 1); //A := 2                // := 2
+    put_op_attr(STA, WORK_MEM_POW);     //M[POW] := 2*2 = 4     // := 4 * 2 = 8
+    put_op_attr(LDA, WORK_MEM);         //A := M[W] := 2        // := 1
+    put_op_attr(SUBM, 1);               //A := 1                // := 0
+    put_op_attr(STA, WORK_MEM);         //M[W] := A := 1        // := 0 --> JMP ----v
+    //JMP CALC
+    put_op_attr(JMP, address);          //JMP CALC -------------^
+
+    //SAVE:
+    put_op_attr(LDA, WORK_MEM_POW);     //A := 8
+    put_word(PUSH);                     //PUSH result
+
+    //END:
+    //JMP -> ADDR + 3 [OUT OF POWER]
+    put_op_attr(JMP, (short) (get_address() + 3));
+
+    //In case of ^0
+    //clear A
+    put_op_attr(LDAM, 1);
+    //push 1
+    put_word(PUSH);
+}
+
 void write_ask_var(short index, char *name)
 {
-    char *buffer = (char *) calloc(strlen(name), sizeof(char));
-    buffer = strcpy(buffer, name);
+
+    char buffer[] = "INP ";
+    strcat(buffer, name);
     strcat(buffer, " := ");
 
     write_string(buffer);
