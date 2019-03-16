@@ -7,14 +7,19 @@
 /* Typy symbolov - lexikalnych jednotiek */
 typedef enum {
     VALUE,
-    ID,
+    ID, VAR, BOOL, AND, SEP,
     READ,
     PRINT,
     PLUS, MINUS, MUL, DIV, POWER,
-    LPAR, RPAR,
+    LPAR, RPAR, LCB, RCB, LBR, RBR,
     COMMA,
-    SEOF, SERROR
+    SEOF, SERROR,
+    GT, GE, LT, LE, EQ, NE,
+    IF, ELSE, WHILE,
+    SAVE, END, DECLARE
 } Symbol;
+
+int position;
 
 /* Nazvy symbolov (len pre ich jednoduchsi vypis) */
 extern const char *SYM_NAMES[];

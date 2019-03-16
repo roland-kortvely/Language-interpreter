@@ -6,7 +6,7 @@
 #define WORK_MEM (short)0x2
 
 // Position of memory used for power
-#define WORK_MEM_POW (short)0x2000
+//#define WORK_MEM_POW (short)0x2000
 
 // The start of the variables area. It is 3, since you already have JMP, its address and WORK_MEM in memory.
 #define VAR_OFFSET (short)0x3
@@ -199,8 +199,8 @@ void write_power()
 
     //Move 2 to stack, twice
     put_word(POP);
-    put_op_attr(STA, WORK_MEM_POW);
-    put_op_attr(STA, WORK_MEM_POW + 1);
+    put_op_attr(STA, WORK_MEM + 1);
+    put_op_attr(STA, WORK_MEM + 2);
 
     //Move to work memory
     put_op_attr(LDA, WORK_MEM); //A := 3
@@ -216,9 +216,9 @@ void write_power()
     put_op_attr(BZE, (short) (get_address() + 18));
 
     put_op_attr(STA, WORK_MEM);         //M[W] := 2             // := 1
-    put_op_attr(LDA, WORK_MEM_POW);     //A := M[POW] := 2      // := 4
-    put_op_attr(MUL, WORK_MEM_POW + 1); //A := 2                // := 2
-    put_op_attr(STA, WORK_MEM_POW);     //M[POW] := 2*2 = 4     // := 4 * 2 = 8
+    put_op_attr(LDA, WORK_MEM + 1);     //A := M[POW] := 2      // := 4
+    put_op_attr(MUL, WORK_MEM + 2);     //A := 2                // := 2
+    put_op_attr(STA, WORK_MEM + 1);     //M[POW] := 2*2 = 4     // := 4 * 2 = 8
     put_op_attr(LDA, WORK_MEM);         //A := M[W] := 2        // := 1
     put_op_attr(SUBM, 1);               //A := 1                // := 0
     put_op_attr(STA, WORK_MEM);         //M[W] := A := 1        // := 0 --> JMP ----v
@@ -226,7 +226,7 @@ void write_power()
     put_op_attr(JMP, address);          //JMP CALC -------------^
 
     //SAVE:
-    put_op_attr(LDA, WORK_MEM_POW);     //A := 8
+    put_op_attr(LDA, WORK_MEM + 1);     //A := 8
     put_word(PUSH);                     //PUSH result
 
     //END:
@@ -253,4 +253,98 @@ void write_ask_var(short index, char *name)
     put_op_attr(STA, VAR_OFFSET + index);
 }
 
+void write_eq()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(EQ, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_ne()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(NE, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_lt()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(LT, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_le()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(LE, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_gt()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(GT, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_ge()
+{
+    put_word(POP);
+    put_op_attr(STA, WORK_MEM);
+    put_word(POP);
+    put_op_attr(GE, WORK_MEM);
+    put_word(PUSH);
+}
+
+void write_save_var(short index)
+{
+    put_op_attr(STA, index + VAR_OFFSET);
+}
+
+short write_bze_begin()
+{
+    put_word(POP);
+    put_word(BZE);
+    short adress = get_address();
+    put_word(NOP);
+    return adress;
+}
+
+short write_branch_jmp()
+{
+    put_word(JMP);
+    short adress = get_address();
+    put_word(NOP);
+    return adress;
+}
+
+void write_jmp_addr(int address)
+{
+    put_op_attr(JMP, (short) address);
+}
+
+void write_finish(short codelist, short address)
+{
+    code_list[codelist] = address;
+}
+
+void write_bool()
+{
+    put_word(POP);
+    put_op_attr(BZE, (short) (get_address() + 16));
+    write_string("true");
+    put_op_attr(JMP, (short) (get_address() + 17));
+    write_string("false");
+}
 

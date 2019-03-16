@@ -3,18 +3,42 @@
 
 #include "lexer.h"
 
-int match(Symbol expected);
+#define KeySet unsigned long int
+#define E 1 <<
 
-void mul_div();
-void expr();
+int errors;
+int *error_position;
 
-void term();
+short flags[LEX_IDS_MAX][2];
 
-void print();
-void read();
+void declare(KeySet K);
 
-void program();
+void program(KeySet K);
 
-void crash(char * expected);
+void process(KeySet K);
+
+int match(Symbol expected, KeySet K);
+
+void mul_div(KeySet K);
+
+void expr(KeySet K);
+
+void term(KeySet K);
+
+void print(KeySet K);
+
+void read(KeySet K);
+
+void error(const char *msg, KeySet K);
+
+void check(const char *msg, KeySet K);
+
+void repeat(KeySet K);
+
+void branch(KeySet K);
+
+void cond(KeySet K);
+
+void save(KeySet K);
 
 #endif //INTERPRETER_H

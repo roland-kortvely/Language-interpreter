@@ -1,7 +1,10 @@
+#define _DEFAULT_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "lexer.h"
 
@@ -9,8 +12,12 @@
 const char *SYM_NAMES[] = {
         [VALUE]="VALUE", [ID]="ID", [READ]="READ", [PRINT]="PRINT",
         [PLUS]="PLUS", [MINUS]="MINUS", [MUL]="MUL", [DIV]="DIV", [POWER]="POWER",
-        [LPAR]="LPAR", [RPAR]="RPAR", [COMMA]="COMMA",
-        [SEOF]="SEOF", [SERROR]="SERROR"
+        [LPAR]="LPAR", [RPAR]="RPAR", [RCB] = "{", [LCB] = "}", [COMMA]="COMMA",
+        [SEOF]="SEOF", [SERROR]="SERROR", [AND] = "AND",
+        [LT] = "LT", [LE] = "LE", [GT] = "GT", [GE] = "GE", [EQ] = "EQ", [NE] = "NE",
+        [SAVE] = "SAVE", [VAR] = "VAR", [BOOL] = "BOOL",
+        [WHILE] = "WHILE", [END] = "END", [IF] = "IF", [ELSE] = "ELSE", [SEP] = ";",
+        [DECLARE] = "DECLARE"
 };
 
 /* Globalne premenne, "public" */
@@ -28,7 +35,8 @@ static int ic;          // Index dalsieho znaku vo vstupnom retazci
 
 
 /* Inicializacia lex. analyzatora. Parametrom je vstupny retazec. */
-void init_lexer(char *string) {
+void init_lexer(char *string)
+{
     input = string;
     ic = 0;
     lex_ids_size = 0;
@@ -37,7 +45,8 @@ void init_lexer(char *string) {
 
 /* Ulozenie identifikatora `id` do tabulky identifikatorov ak tam este nie je.
  * Vracia index, na ktorom je identifikator ulozeny. */
-int store_id(char *id) {
+int store_id(char *id)
+{
     int i = 0;
     while (i < lex_ids_size) {
         if (strcmp(id, lex_ids[i]) == 0)
@@ -52,7 +61,8 @@ int store_id(char *id) {
 
 /* Precitanie dalsieho symbolu.
  * Volanie nastavi nove hodnoty lex_symbol a lex_attr. */
-void next_symbol() {
+void next_symbol()
+{
 
     c = input[ic];
     ic++;
@@ -62,8 +72,15 @@ void next_symbol() {
         ic++;
     }
 
-    switch (c) {
+    position = ic;
 
+    switch (c) {
+        case '&':
+            lex_symbol = AND;
+            break;
+        case ';':
+            lex_symbol = SEP;
+            break;
         case ',':
             lex_symbol = COMMA;
             break;
@@ -87,6 +104,18 @@ void next_symbol() {
             break;
         case ')':
             lex_symbol = RPAR;
+            break;
+        case '[':
+            lex_symbol = LBR;
+            break;
+        case ']':
+            lex_symbol = RBR;
+            break;
+        case '{':
+            lex_symbol = LCB;
+            break;
+        case '}':
+            lex_symbol = RCB;
             break;
         case '\0':
             lex_symbol = SEOF;
@@ -130,11 +159,46 @@ void next_symbol() {
                     lex_symbol = READ;
                 } else if (strcmp(id, "print") == 0) {
                     lex_symbol = PRINT;
-                } else { // Ulozenie do tabulky identifikatorov
+                } else if (strcmp(id, "if") == 0) {
+                    lex_symbol = IF;
+                } else if (strcmp(id, "else") == 0) {
+                    lex_symbol = ELSE;
+                } else if (strcmp(id, "while") == 0) {
+                    lex_symbol = WHILE;
+                } else if (strcmp(id, "save") == 0) {
+                    lex_symbol = SAVE;
+                } else if (strcmp(id, "bool") == 0) {
+                    lex_symbol = BOOL;
+                } else if (strcmp(id, "declare") == 0) {
+                    lex_symbol = DECLARE;
+                } else {
+                    // Ulozenie do tabulky identifikatorov
                     lex_attr = store_id(id);
                     lex_symbol = ID;
                 }
                 free(id);
+            } else if (c == '=' && input[ic] == '=') {
+                lex_symbol = EQ;
+                ic++;
+            } else if (c == '=' && input[ic] != '=') {
+                lex_symbol = VAR;
+            } else if (c == '!' && input[ic] == '=') {
+                lex_symbol = NE;
+                ic++;
+            } else if (c == '<') {
+                if (input[ic] == '=') {
+                    ic++;
+                    lex_symbol = LE;
+                } else {
+                    lex_symbol = LT;
+                }
+            } else if (c == '>') {
+                if (input[ic] == '=') {
+                    ic++;
+                    lex_symbol = GE;
+                } else {
+                    lex_symbol = GT;
+                }
             } else {
                 lex_symbol = SERROR;
             }
@@ -142,12 +206,14 @@ void next_symbol() {
 }
 
 /* Nazov lexikalnej jednotky */
-const char *symbol_name(Symbol symbol) {
+const char *symbol_name(Symbol symbol)
+{
     return SYM_NAMES[symbol];
 }
 
 /* Vypis vsetky lexikalnych jednotiek zo vstupu */
-void print_tokens() {
+void print_tokens()
+{
     printf("\nVystup lexikalnej analyzy (retazec symbolov)\n");
     do {
         next_symbol();
