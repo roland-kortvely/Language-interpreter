@@ -242,7 +242,6 @@ void write_power()
 
 void write_ask_var(short index, char *name)
 {
-
     char buffer[] = "INP ";
     strcat(buffer, name);
     strcat(buffer, " := ");
@@ -316,17 +315,17 @@ short write_bze_begin()
 {
     put_word(POP);
     put_word(BZE);
-    short adress = get_address();
+    short address = get_address();
     put_word(NOP);
-    return adress;
+    return address;
 }
 
 short write_branch_jmp()
 {
     put_word(JMP);
-    short adress = get_address();
+    short address = get_address();
     put_word(NOP);
-    return adress;
+    return address;
 }
 
 void write_jmp_addr(int address)
@@ -334,9 +333,9 @@ void write_jmp_addr(int address)
     put_op_attr(JMP, (short) address);
 }
 
-void write_finish(short codelist, short address)
+void write_flag(short list, short address)
 {
-    code_list[codelist] = address;
+    code_list[list] = address;
 }
 
 void write_bool()

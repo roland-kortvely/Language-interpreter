@@ -12,11 +12,17 @@
 const char *SYM_NAMES[] = {
         [VALUE]="VALUE", [ID]="ID", [READ]="READ", [PRINT]="PRINT",
         [PLUS]="PLUS", [MINUS]="MINUS", [MUL]="MUL", [DIV]="DIV", [POWER]="POWER",
-        [LPAR]="LPAR", [RPAR]="RPAR", [RCB] = "{", [LCB] = "}", [COMMA]="COMMA",
+        [LPAR]="(", [RPAR]=")",
+        [LCB] = "{", [RCB] = "}",
+        [LSB] = "[", [RSB] = "]",
+        [COMMA]="COMMA",
         [SEOF]="SEOF", [SERROR]="SERROR", [AND] = "AND",
         [LT] = "LT", [LE] = "LE", [GT] = "GT", [GE] = "GE", [EQ] = "EQ", [NE] = "NE",
-        [SAVE] = "SAVE", [VAR] = "VAR", [BOOL] = "BOOL",
-        [WHILE] = "WHILE", [END] = "END", [IF] = "IF", [ELSE] = "ELSE", [SEP] = ";",
+        [SET] = "SET", [ASSIGN] = "ASSIGN", [BOOL] = "BOOL",
+        [WHILE] = "WHILE",
+        [END] = "END",
+        [IF] = "IF", [ELSE] = "ELSE",
+        [EOC] = "EOC",
         [DECLARE] = "DECLARE"
 };
 
@@ -63,7 +69,6 @@ int store_id(char *id)
  * Volanie nastavi nove hodnoty lex_symbol a lex_attr. */
 void next_symbol()
 {
-
     c = input[ic];
     ic++;
 
@@ -79,7 +84,7 @@ void next_symbol()
             lex_symbol = AND;
             break;
         case ';':
-            lex_symbol = SEP;
+            lex_symbol = EOC;
             break;
         case ',':
             lex_symbol = COMMA;
@@ -106,10 +111,10 @@ void next_symbol()
             lex_symbol = RPAR;
             break;
         case '[':
-            lex_symbol = LBR;
+            lex_symbol = LSB;
             break;
         case ']':
-            lex_symbol = RBR;
+            lex_symbol = RSB;
             break;
         case '{':
             lex_symbol = LCB;
@@ -165,8 +170,8 @@ void next_symbol()
                     lex_symbol = ELSE;
                 } else if (strcmp(id, "while") == 0) {
                     lex_symbol = WHILE;
-                } else if (strcmp(id, "save") == 0) {
-                    lex_symbol = SAVE;
+                } else if (strcmp(id, "set") == 0) {
+                    lex_symbol = SET;
                 } else if (strcmp(id, "bool") == 0) {
                     lex_symbol = BOOL;
                 } else if (strcmp(id, "declare") == 0) {
@@ -181,7 +186,7 @@ void next_symbol()
                 lex_symbol = EQ;
                 ic++;
             } else if (c == '=' && input[ic] != '=') {
-                lex_symbol = VAR;
+                lex_symbol = ASSIGN;
             } else if (c == '!' && input[ic] == '=') {
                 lex_symbol = NE;
                 ic++;

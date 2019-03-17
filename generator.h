@@ -42,7 +42,7 @@ short write_branch_jmp();
 
 void write_jmp_addr(int address);
 
-void write_finish(short list, short address);
+void write_flag(short list, short address);
 
 void write_bool();
 

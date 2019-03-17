@@ -13,7 +13,7 @@
 
 void error(const char *msg, KeySet K)
 {
-    fprintf(stderr, "CHYBA na pozicii %d: %s, vstup bol %s\n", position, msg, symbol_name(lex_symbol));
+    fprintf(stderr, "CHYBA na pozicii %d: %s\n", position, msg);
 
     error_position = realloc(error_position, (size_t) ++errors);
     error_position[errors - 1] = position;
@@ -66,14 +66,14 @@ int match(const Symbol expected, KeySet K)
 
 /* Gramatika:
 *
-* Declare -> [declare id{"," id}] Program
+* Declare -> [declare id{"," id};] Program
 * Program -> Process {";" Process}
 * Process -> (Read | Save | Print | While | If)
-* Read -> "read" id{"," id}
-* Save -> "save" id "=" Expr {"," id Expr}
+* Read -> "read" id{"," id};
+* Save -> "save" id "=" Expr {"," id Expr};
 * Print -> "write" ("bool" Cond | Expr ) {"&" ("bool" Cond | Expr )}
-* While → "while" Cond "{" Program "}"
-* If → "if" Cond "{" Program ["@" Program] "}"
+* While → "while" (cond) "{" Program "}"
+* If → "if" (cond) "{" Program ["@" Program] "}"
 * Cond -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr]
 * Expr -> Mul {("+" | "-") Mul}
 * Mul -> Power {("*" | "/") Power}
@@ -98,7 +98,7 @@ void declare(KeySet K)
 
         flags[match(ID, K)][0] = 1;
 
-        check("Ocakavana \",\"", E COMMA | E SEP | K);
+        check("Ocakavana \",\"", E COMMA | E EOC | K);
 
         while ((E lex_symbol) & (E COMMA | E ID)) {
 
@@ -111,30 +111,30 @@ void declare(KeySet K)
                     flags[lex_attr][0] = 1;
                     next_symbol();
                 } else {
-                    error("Premenna bola deklarovana", E COMMA | E SEP | K);
+                    error("Premenna bola deklarovana", E COMMA | E EOC | K);
                 }
             } else {
                 error("Ocakavane ID", E ID | K);
             }
 
-            check("Ocakavana \",\"", E COMMA | E SEP | E ID | K);
+            check("Ocakavana \",\"", E COMMA | E EOC | E ID | K);
         }
     }
 
-    match(SEP, K);
+    match(EOC, K);
 
     write_begin((short) lex_ids_size);
+
     program(K);
 }
 
 /* Program -> Process {";" Process} */
 void program(KeySet K)
 {
-
     do {
-        check("Ocakava sa prikaz", E SEP | E READ | E PRINT | E SAVE | E WHILE | E IF | K);
+        check("Ocakava sa prikaz", E EOC | E READ | E PRINT | E SET | E WHILE | E IF | K);
 
-        if (lex_symbol == SEP) {
+        if (lex_symbol == EOC) {
             next_symbol();
         }
 
@@ -142,40 +142,23 @@ void program(KeySet K)
             return;
         }
 
-        process((E SEP) | K);
-    } while ((E lex_symbol) & E SEP);
+        command(E EOC | K);
 
-    /*
-    check("Ocakavany tag", E READ | E PRINT | E SAVE | E WHILE | E IF | K);
-    process((E SEP) | K);
-    check("Ocakava sa \";\", \"|\", \"]\", \"}\" alebo koniec suboru", (E SEP) | K);
-
-    while ((E lex_symbol) & E SEP) {
-        next_symbol();
-
-        if (lex_symbol & SEOF) {
-            return;
-        }
-
-        check("Ocakavany tag", E READ | E PRINT | E SAVE | E WHILE | E IF | K);
-        process((E SEP) | K);
-        check("Ocakavany \"|\", \"]\", \"}\" alebo koniec suboru", (E SEP) | K);
-    }
-     */
+    } while (lex_symbol != SEOF && lex_symbol != RCB);
 }
 
-/* Process -> (Read | Store | Print | While | If) */
-void process(KeySet K)
+/* Command -> (Read | Store | Print | While | If) */
+void command(KeySet K)
 {
     switch (lex_symbol) {
         case READ:
-            read((E COMMA) | (E SEP) | K);
+            read(E COMMA | E EOC | K);
             break;
         case PRINT:
-            print(K);
+            print(E COMMA | E EOC | K);
             break;
-        case SAVE:
-            save((E COMMA) | K);
+        case SET:
+            set(E COMMA | E EOC | K);
             break;
         case WHILE:
             repeat(K);
@@ -184,72 +167,66 @@ void process(KeySet K)
             branch(K);
             break;
         default:
-            error("Ocakavany tag", E READ | E PRINT | E SAVE | E WHILE | E IF | K);
+            error("Ocakavany prikaz", E READ | E PRINT | E SET | E WHILE | E IF | K);
+            printf("Vstp je ale %s\n", symbol_name(lex_symbol));
+            break;
     }
 }
 
-/* While → "while" Cond "{" Program "}" */
+/* While → "while" (Cond) "{" Program "}" */
 void repeat(KeySet K)
 {
     match(WHILE, K);
 
+    match(LPAR, K);
     short begin = get_address();
-    cond((E LCB) | K);
+    cond(E RPAR | K);
+    match(RPAR, K);
 
-    if ((E lex_symbol) & E LCB) {
-        match(LCB, K);
-    } else {
-        error("Ocakava sa \"{\"", (E LCB) | E READ | E PRINT | E SAVE | E WHILE | E IF | K);
-    }
+    match(LCB, K);
 
     short addr_begin = write_bze_begin();
+
     program((E RCB) | K);
 
-    if ((E lex_symbol) & E RCB)
-        match(RCB, K);
-    else
-        error("Ocakava sa \"}\"", (E RCB) | K);
+    match(RCB, K);
 
     write_jmp_addr(begin);
-    write_finish(addr_begin, get_address());
+    write_flag(addr_begin, get_address());
 }
 
-/* If → "if" Cond "{" Program ["@" Program] "}" */
+/* If → "if" [Cond] "{" Program ["@" Program] "}" */
 void branch(KeySet K)
 {
     match(IF, K);
 
-    cond((E LCB) | K);
+    match(LPAR, K);
+    cond(E RPAR | K);
+    match(RPAR, K);
 
-    if ((E lex_symbol) & E LCB) {
-        match(LCB, K);
-    } else {
-        error("Ocakava sa \"{\"", (E LCB | E ELSE) | E READ | E PRINT | E SAVE | E WHILE | E IF | K);
-    }
+    match(LCB, K);
 
-    short codelist_1 = write_bze_begin();
-    program((E RCB | E ELSE) | K);
-    short codelist_2 = write_branch_jmp();
+    short branch_1 = write_bze_begin();
+
+    program(E RCB | K);
+
+    short branch_2 = write_branch_jmp();
+
+    write_flag(branch_1, get_address());
+
+    match(RCB, K);
 
     if ((E lex_symbol) & E ELSE) {
-        next_symbol();
-        write_finish(codelist_1, get_address());
+
+        match(ELSE, K);
+        match(LCB, K);
+
         program((E RCB) | K);
 
-        if ((E lex_symbol) & E RCB) {
-            match(RCB, K);
-        } else {
-            error("Ocakava sa \"}\"", (E RCB) | K);
-        }
-        write_finish(codelist_2, get_address());
-    } else {
-        if ((E lex_symbol) & E RCB) {
-            match(RCB, K);
-        } else {
-            error("Ocakava sa \"}\"", (E RCB) | K);
-        }
-        write_finish(codelist_2, get_address());
+        match(RCB, K);
     }
+
+    write_flag(branch_2, get_address());
 }
 
 /* Cond -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr] */
@@ -290,10 +267,10 @@ void cond(KeySet K)
     }
 }
 
-/* Save -> "save" id "=" Expr {"," id "=" Expr} */
-void save(KeySet K)
+/* SET -> "set" id "=" Expr {"," id "=" Expr} */
+void set(KeySet K)
 {
-    match(SAVE, K);
+    match(SET, K);
 
     if (!(E lex_symbol & E ID)) {
         error("Ocakavane ID", (E ID) | K);
@@ -305,12 +282,12 @@ void save(KeySet K)
         } else {
             int attr = match(ID, K);
 
-            if (!(E lex_symbol & E VAR)) {
-                error("Ocakavana \"~\"", (E VAR) | K);
+            if (!(E lex_symbol & E ASSIGN)) {
+                error("Ocakavana \"~\"", (E ASSIGN) | K);
             }
 
-            if ((E lex_symbol) & E VAR) {
-                match(VAR, K);
+            if ((E lex_symbol) & E ASSIGN) {
+                match(ASSIGN, K);
                 cond(K);
                 flags[attr][1] = 1;
                 write_save_var((short) attr);
@@ -331,12 +308,12 @@ void save(KeySet K)
             } else {
                 int attr = match(ID, K);
 
-                if (!(E lex_symbol & E VAR)) {
-                    error("Ocakavana \"~\"", (E VAR) | K);
+                if (!(E lex_symbol & E ASSIGN)) {
+                    error("Ocakavana \"~\"", (E ASSIGN) | K);
                 }
 
-                if ((E lex_symbol) & E VAR) {
-                    match(VAR, K);
+                if ((E lex_symbol) & E ASSIGN) {
+                    match(ASSIGN, K);
                     cond(K);
                     flags[attr][1] = 1;
                     write_save_var((short) attr);
@@ -344,6 +321,8 @@ void save(KeySet K)
             }
         }
     }
+
+    match(EOC, K);
 }
 
 /* Term -> VALUE | "(" Expr ")" */
@@ -384,7 +363,6 @@ void term(KeySet K)
 /* Power -> Term {"^"  Power} */
 void power(KeySet K)
 {
-
     Symbol operator;
     term((E POWER) | K);
 
@@ -483,7 +461,7 @@ void read(KeySet K)
         }
     }
 
-    check("Ocakavana \",\" alebo \";\"", (E SEP) | K);
+    check("Ocakavana \",\" alebo \";\"", (E EOC) | K);
     while ((E lex_symbol) & E COMMA) {
         next_symbol();
 
@@ -503,7 +481,7 @@ void read(KeySet K)
         }
     }
 
-    check("Ocakava sa \";\"", E SEP | K);
+    match(EOC, K);
 }
 
 
@@ -543,5 +521,5 @@ void print(KeySet K)
         check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
     }
 
-    check("Ocakava sa \";\"", E SEP | K);
+    match(EOC, K);
 }

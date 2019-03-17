@@ -15,7 +15,7 @@ void declare(KeySet K);
 
 void program(KeySet K);
 
-void process(KeySet K);
+void command(KeySet K);
 
 int match(Symbol expected, KeySet K);
 
@@ -39,6 +39,6 @@ void branch(KeySet K);
 
 void cond(KeySet K);
 
-void save(KeySet K);
+void set(KeySet K);
 
 #endif //INTERPRETER_H
