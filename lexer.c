@@ -10,20 +10,21 @@
 
 /* Nazvy symbolov (len pre ich jednoduchsi vypis) */
 const char *SYM_NAMES[] = {
-        [VALUE]="VALUE", [ID]="ID", [READ]="READ", [PRINT]="PRINT",
-        [PLUS]="PLUS", [MINUS]="MINUS", [MUL]="MUL", [DIV]="DIV", [POWER]="POWER",
-        [LPAR]="(", [RPAR]=")",
+        [VALUE] = "VALUE", [ID] = "ID",
+        [READ] = "READ", [PRINT] = "PRINT", [SET] = "SET",
+        [PLUS] = "PLUS", [MINUS] = "MINUS", [MUL] = "MUL", [DIV] = "DIV", [POWER] = "POWER",
+        [LPAR] ="(", [RPAR]=")",
         [LCB] = "{", [RCB] = "}",
         [LSB] = "[", [RSB] = "]",
-        [COMMA]="COMMA",
-        [SEOF]="SEOF", [SERROR]="SERROR", [AND] = "AND",
+        [COMMA] = "COMMA",
+        [AND] = "AND",
+        [INCR] = "INCR", [DECR] = "DECR",
         [LT] = "LT", [LE] = "LE", [GT] = "GT", [GE] = "GE", [EQ] = "EQ", [NE] = "NE",
-        [SET] = "SET", [ASSIGN] = "ASSIGN", [BOOL] = "BOOL",
-        [WHILE] = "WHILE",
-        [END] = "END",
+        [ASSIGN] = "ASSIGN", [BOOL] = "BOOL",
+        [WHILE] = "WHILE", [FOR] = "FOR",
         [IF] = "IF", [ELSE] = "ELSE",
-        [EOC] = "EOC",
-        [DECLARE] = "DECLARE"
+        [DECLARE] = "DECLARE",
+        [EOC] = "EOC", [SEOF]="SEOF", [SERROR]="SERROR"
 };
 
 /* Globalne premenne, "public" */
@@ -124,7 +125,7 @@ void next_symbol()
             break;
         case '\0':
             lex_symbol = SEOF;
-            break; // Koniec retazca
+            break;
 
         default:
             if (isdigit(c)) {
@@ -170,12 +171,18 @@ void next_symbol()
                     lex_symbol = ELSE;
                 } else if (strcmp(id, "while") == 0) {
                     lex_symbol = WHILE;
+                } else if (strcmp(id, "for") == 0) {
+                    lex_symbol = FOR;
                 } else if (strcmp(id, "set") == 0) {
                     lex_symbol = SET;
                 } else if (strcmp(id, "bool") == 0) {
                     lex_symbol = BOOL;
                 } else if (strcmp(id, "declare") == 0) {
                     lex_symbol = DECLARE;
+                } else if (strcmp(id, "incr") == 0) {
+                    lex_symbol = INCR;
+                } else if (strcmp(id, "decr") == 0) {
+                    lex_symbol = DECR;
                 } else {
                     // Ulozenie do tabulky identifikatorov
                     lex_attr = store_id(id);

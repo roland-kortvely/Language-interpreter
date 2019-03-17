@@ -9,8 +9,6 @@
 
 /*** Syntakticky analyzator a interpretator ***/
 
-//int variables[LEX_IDS_MAX];
-
 void error(const char *msg, KeySet K)
 {
     fprintf(stderr, "CHYBA na pozicii %d: %s\n", position, msg);
@@ -51,30 +49,20 @@ int match(const Symbol expected, KeySet K)
     return attr;
 }
 
-//void read_variable(int id_idx)
-//{
-//
-//    /*
-//    int value;
-//    printf("ID <%d> -> %s = ", id_idx, lex_ids[id_idx]);
-//    scanf("%d", &value);
-//    variables[id_idx] = value;
-//    */
-//
-//    write_ask_var((short) id_idx, lex_ids[id_idx]);
-//}
-
 /* Gramatika:
 *
 * Declare -> [declare id{"," id};] Program
-* Program -> Process {";" Process}
-* Process -> (Read | Save | Print | While | If)
+* Program -> Command {"}" Command}
+* Command -> (Read | Print | Set | While | For | If)
 * Read -> "read" id{"," id};
-* Save -> "save" id "=" Expr {"," id Expr};
-* Print -> "write" ("bool" Cond | Expr ) {"&" ("bool" Cond | Expr )}
-* While → "while" (cond) "{" Program "}"
-* If → "if" (cond) "{" Program ["@" Program] "}"
-* Cond -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr]
+* Set -> "set" id "=" Expr {"," id Expr};
+* Incr -> "incr" id;
+* Decr -> "decr" id;
+* Print -> "print" ("bool" Condition | Expr ) {"&" ("bool" Condition | Expr )};
+* While → "while" (Condition) "{" Program "}"
+* For → "for" (set "=" Expr {"," id Expr}; Condition; (Set | Incr | Decr); "{" Program "}"
+* If → "if" (Condition) "{" Program ["@" Program] "}"
+* Condition -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr]
 * Expr -> Mul {("+" | "-") Mul}
 * Mul -> Power {("*" | "/") Power}
 * Power -> Term ["^" Power]
@@ -128,11 +116,11 @@ void declare(KeySet K)
     program(K);
 }
 
-/* Program -> Process {";" Process} */
+/* Program -> Command {"}" Command} */
 void program(KeySet K)
 {
     do {
-        check("Ocakava sa prikaz", E EOC | E READ | E PRINT | E SET | E WHILE | E IF | K);
+        check("Ocakava sa prikaz", E EOC | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
 
         if (lex_symbol == EOC) {
             next_symbol();
@@ -147,7 +135,7 @@ void program(KeySet K)
     } while (lex_symbol != SEOF && lex_symbol != RCB);
 }
 
-/* Command -> (Read | Store | Print | While | If) */
+/* Command -> (Read | Print | Set | While | For | If) */
 void command(KeySet K)
 {
     switch (lex_symbol) {
@@ -160,48 +148,117 @@ void command(KeySet K)
         case SET:
             set(E COMMA | E EOC | K);
             break;
+        case INCR:
+            _incr(K);
+            break;
+        case DECR:
+            _decr(K);
+            break;
         case WHILE:
-            repeat(K);
+            _while(K);
+            break;
+        case FOR:
+            _for(K);
             break;
         case IF:
-            branch(K);
+            _if(K);
             break;
         default:
-            error("Ocakavany prikaz", E READ | E PRINT | E SET | E WHILE | E IF | K);
-            printf("Vstp je ale %s\n", symbol_name(lex_symbol));
+            error("Ocakavany prikaz", E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
             break;
     }
 }
 
-/* While → "while" (Cond) "{" Program "}" */
-void repeat(KeySet K)
+/* Incr -> "incr" id; */
+void _incr(KeySet K)
+{
+    match(INCR, K);
+
+    write_incr((short) match(ID, K));
+
+    match(EOC, K);
+}
+
+/* Incr -> "decr" id; */
+void _decr(KeySet K)
+{
+    match(DECR, K);
+
+    write_decr((short) match(ID, K));
+
+    match(EOC, K);
+}
+
+/* While → "while" (Condition) "{" Program "}" */
+void _while(KeySet K)
 {
     match(WHILE, K);
 
     match(LPAR, K);
-    short begin = get_address();
-    cond(E RPAR | K);
+    short _condition = get_address();
+    condition(E RPAR | K);
+    short _condition_end = write_bze_begin();
+
     match(RPAR, K);
-
     match(LCB, K);
-
-    short addr_begin = write_bze_begin();
 
     program((E RCB) | K);
 
     match(RCB, K);
 
-    write_jmp_addr(begin);
-    write_flag(addr_begin, get_address());
+    write_jmp_addr(_condition);
+    write_flag(_condition_end, get_address());
 }
 
-/* If → "if" [Cond] "{" Program ["@" Program] "}" */
-void branch(KeySet K)
+/* For → "for" (set "=" Expr {"," id Expr}; Condition; (Set | Incr | Decr); "{" Program "}" */
+void _for(KeySet K)
+{
+    match(FOR, K);
+
+    match(LPAR, K);
+
+    check("Ocakava sa set", E SET | K);
+    set(K);
+
+    short _condition = get_address();
+    condition(E EOC | K);
+    short _condition_end = write_bze_begin();
+    match(EOC, K);
+    short _program = write_branch_jmp();
+
+    check("Ocakava sa set, incr alebo decr", E SET | E INCR | E DECR | K);
+
+    short _flag = write_branch_jmp();
+
+    if (E lex_symbol & E SET) {
+        set(K);
+    } else if (E lex_symbol & E INCR) {
+        _incr(K);
+    } else if (E lex_symbol & E DECR) {
+        _decr(K);
+    }
+
+    write_jmp_addr(_condition);
+
+    match(RPAR, K);
+    match(LCB, K);
+
+    write_flag(_program, get_address());
+    program((E RCB) | K);
+
+    match(RCB, K);
+
+    write_jmp_addr(_flag);
+    write_flag(_condition_end, get_address());
+}
+
+/* If → "if" (Condition) "{" Program ["@" Program] "}" */
+void _if(KeySet K)
 {
     match(IF, K);
 
     match(LPAR, K);
-    cond(E RPAR | K);
+    condition(E RPAR | K);
     match(RPAR, K);
 
     match(LCB, K);
@@ -229,8 +286,93 @@ void branch(KeySet K)
     write_flag(branch_2, get_address());
 }
 
-/* Cond -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr] */
-void cond(KeySet K)
+// Read -> "read" ID {"," ID};
+void read(KeySet K)
+{
+    match(READ, K);
+
+    if (!(E lex_symbol & E ID)) {
+        error("Ocakavane ID", (E ID) | K);
+    }
+
+    if ((E lex_symbol) & E ID) {
+        if (flags[lex_attr][0] == 0) {
+            error("Nedeklarovana premenna", K);
+        } else {
+            write_ask_var((short) lex_attr, lex_ids[lex_attr]);
+            write_var((short) lex_attr);
+            flags[lex_attr][1] = 1;
+            match(ID, K);
+        }
+    }
+
+    check("Ocakavana \",\" alebo \";\"", (E EOC) | K);
+    while ((E lex_symbol) & E COMMA) {
+        next_symbol();
+
+        if (!(E lex_symbol & E ID)) {
+            error("Ocakavane ID", (E ID) | K);
+        }
+
+        if ((E lex_symbol) & E ID) {
+            if (flags[lex_attr][0] == 0) {
+                error("Nedeklarovana premenna", K);
+            } else {
+                write_ask_var((short) lex_attr, lex_ids[lex_attr]);
+                write_var((short) lex_attr);
+                flags[lex_attr][1] = 1;
+                match(ID, K);
+            }
+        }
+    }
+
+    match(EOC, K);
+}
+
+
+/* Print -> "print" ("bool" Cond | Expr ) {"&" ("bool" Cond | Expr )}; */
+void print(KeySet K)
+{
+    match(PRINT, K);
+
+    if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR))) {
+        error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
+    }
+
+    if ((E lex_symbol) & E BOOL) {
+        next_symbol();
+        condition((E AND) | K);
+        write_bool();
+    } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
+        condition((E AND) | K);
+        write_result();
+    }
+
+    check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
+    while (lex_symbol == AND) {
+        next_symbol();
+
+        if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR))) {
+            error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
+        }
+
+        if ((E lex_symbol) & E BOOL) {
+            next_symbol();
+            condition((E AND) | K);
+            write_bool();
+        } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
+            condition((E AND) | K);
+            write_result();
+        }
+
+        check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
+    }
+
+    match(EOC, K);
+}
+
+/* Condition -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr] */
+void condition(KeySet K)
 {
     Symbol operator;
     expr((E EQ | E NE | E LT | E LE | E GT | E GE) | K);
@@ -267,7 +409,7 @@ void cond(KeySet K)
     }
 }
 
-/* SET -> "set" id "=" Expr {"," id "=" Expr} */
+/* Set -> "set" id "=" Expr {"," id "=" Expr} */
 void set(KeySet K)
 {
     match(SET, K);
@@ -283,12 +425,12 @@ void set(KeySet K)
             int attr = match(ID, K);
 
             if (!(E lex_symbol & E ASSIGN)) {
-                error("Ocakavana \"~\"", (E ASSIGN) | K);
+                error("Ocakava sa priradenie \"=\"", (E ASSIGN) | K);
             }
 
             if ((E lex_symbol) & E ASSIGN) {
                 match(ASSIGN, K);
-                cond(K);
+                condition(K);
                 flags[attr][1] = 1;
                 write_save_var((short) attr);
             }
@@ -309,12 +451,12 @@ void set(KeySet K)
                 int attr = match(ID, K);
 
                 if (!(E lex_symbol & E ASSIGN)) {
-                    error("Ocakavana \"~\"", (E ASSIGN) | K);
+                    error("Ocakavana \"=\"", (E ASSIGN) | K);
                 }
 
                 if ((E lex_symbol) & E ASSIGN) {
                     match(ASSIGN, K);
-                    cond(K);
+                    condition(K);
                     flags[attr][1] = 1;
                     write_save_var((short) attr);
                 }
@@ -439,87 +581,4 @@ void expr(KeySet K)
                 error("Ocakava sa \"+\" alebo \"-\"", (E PLUS) | (E MINUS) | K);
         }
     }
-}
-
-// read -> "read" ID {"," ID};
-void read(KeySet K)
-{
-    match(READ, K);
-
-    if (!(E lex_symbol & E ID)) {
-        error("Ocakavane ID", (E ID) | K);
-    }
-
-    if ((E lex_symbol) & E ID) {
-        if (flags[lex_attr][0] == 0) {
-            error("Nedeklarovana premenna", K);
-        } else {
-            write_ask_var((short) lex_attr, lex_ids[lex_attr]);
-            write_var((short) lex_attr);
-            flags[lex_attr][1] = 1;
-            match(ID, K);
-        }
-    }
-
-    check("Ocakavana \",\" alebo \";\"", (E EOC) | K);
-    while ((E lex_symbol) & E COMMA) {
-        next_symbol();
-
-        if (!(E lex_symbol & E ID)) {
-            error("Ocakavane ID", (E ID) | K);
-        }
-
-        if ((E lex_symbol) & E ID) {
-            if (flags[lex_attr][0] == 0) {
-                error("Nedeklarovana premenna", K);
-            } else {
-                write_ask_var((short) lex_attr, lex_ids[lex_attr]);
-                write_var((short) lex_attr);
-                flags[lex_attr][1] = 1;
-                match(ID, K);
-            }
-        }
-    }
-
-    match(EOC, K);
-}
-
-
-/* Print -> "write" ("bool" Cond | Expr ) {"&" ("bool" Cond | Expr )} */
-void print(KeySet K)
-{
-    match(PRINT, K);
-
-    if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR)))
-        error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
-
-    if ((E lex_symbol) & E BOOL) {
-        next_symbol();
-        cond((E AND) | K);
-        write_bool();
-    } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
-        cond((E AND) | K);
-        write_result();
-    }
-
-    check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
-    while (lex_symbol == AND) {
-        next_symbol();
-
-        if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR)))
-            error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
-
-        if ((E lex_symbol) & E BOOL) {
-            next_symbol();
-            cond((E AND) | K);
-            write_bool();
-        } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
-            cond((E AND) | K);
-            write_result();
-        }
-
-        check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
-    }
-
-    match(EOC, K);
 }

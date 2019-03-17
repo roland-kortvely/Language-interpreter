@@ -234,7 +234,7 @@ void write_power()
     put_op_attr(JMP, (short) (get_address() + 3));
 
     //In case of ^0
-    //clear A
+    //A := 1
     put_op_attr(LDAM, 1);
     //push 1
     put_word(PUSH);
@@ -308,7 +308,7 @@ void write_ge()
 
 void write_save_var(short index)
 {
-    put_op_attr(STA, index + VAR_OFFSET);
+    put_op_attr(STA, VAR_OFFSET + index);
 }
 
 short write_bze_begin()
@@ -347,3 +347,20 @@ void write_bool()
     write_string("false");
 }
 
+void write_incr(short index)
+{
+    put_word(PUSH); //save accum
+    put_op_attr(LDA, VAR_OFFSET + index);
+    put_op_attr(ADDM, 1);
+    put_op_attr(STA, VAR_OFFSET + index);
+    put_word(POP); //reload accum
+}
+
+void write_decr(short index)
+{
+    put_word(PUSH); //save accum
+    put_op_attr(LDA, VAR_OFFSET + index);
+    put_op_attr(SUBM, 1);
+    put_op_attr(STA, VAR_OFFSET + index);
+    put_word(POP); //reload accum
+}

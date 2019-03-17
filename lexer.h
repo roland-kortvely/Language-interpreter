@@ -7,16 +7,14 @@
 /* Typy symbolov - lexikalnych jednotiek */
 typedef enum {
     VALUE,
-    ID, ASSIGN, BOOL, AND, EOC,
-    READ,
-    PRINT,
+    ID, BOOL, AND, EOC,
+    READ, PRINT,
     PLUS, MINUS, MUL, DIV, POWER,
     LPAR, RPAR, LCB, RCB, LSB, RSB,
-    COMMA,
-    SEOF, SERROR,
+    COMMA, INCR, DECR,
     GT, GE, LT, LE, EQ, NE,
-    IF, ELSE, WHILE,
-    SET, END, DECLARE
+    IF, ELSE, WHILE, FOR, ASSIGN,
+    SET, DECLARE, SERROR, SEOF,
 } Symbol;
 
 int position;

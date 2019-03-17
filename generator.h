@@ -58,4 +58,8 @@ void write_gt();
 
 void write_ge();
 
+void write_incr(short index);
+
+void write_decr(short index);
+
 #endif /* GENERATOR_H */
