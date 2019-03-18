@@ -248,11 +248,11 @@ void write_power()
 
 void write_ask_var(short index, char *name)
 {
-    //char buffer[] = "INP ";
-    //strcat(buffer, name);
-    //strcat(buffer, " := ");
+    char buffer[] = "INP ";
+    strcat(buffer, name);
+    strcat(buffer, " := ");
 
-    //write_string(buffer);
+    write_string(buffer);
 
     put_word(INP);
     put_op_attr(STA, VAR_OFFSET + index);
@@ -355,18 +355,18 @@ void write_bool()
 
 void write_incr(short index)
 {
-    put_word(PUSH); //save accum
+//    put_word(PUSH); //save accum
     put_op_attr(LDA, VAR_OFFSET + index);
     put_op_attr(ADDM, 1);
     put_op_attr(STA, VAR_OFFSET + index);
-    put_word(POP); //reload accum
+//    put_word(POP); //reload accum
 }
 
 void write_decr(short index)
 {
-    put_word(PUSH); //save accum
+//    put_word(PUSH); //save accum
     put_op_attr(LDA, VAR_OFFSET + index);
     put_op_attr(SUBM, 1);
     put_op_attr(STA, VAR_OFFSET + index);
-    put_word(POP); //reload accum
+//    put_word(POP); //reload accum
 }
