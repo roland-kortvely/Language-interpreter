@@ -125,6 +125,12 @@ void write_result()
     put_word(OUT);
 }
 
+void write_result_char()
+{
+    put_word(POP);
+    put_word(OUTC);
+}
+
 void write_number(short value)
 {
     put_op_attr(LDAM, value);
@@ -242,11 +248,11 @@ void write_power()
 
 void write_ask_var(short index, char *name)
 {
-    char buffer[] = "INP ";
-    strcat(buffer, name);
-    strcat(buffer, " := ");
+    //char buffer[] = "INP ";
+    //strcat(buffer, name);
+    //strcat(buffer, " := ");
 
-    write_string(buffer);
+    //write_string(buffer);
 
     put_word(INP);
     put_op_attr(STA, VAR_OFFSET + index);

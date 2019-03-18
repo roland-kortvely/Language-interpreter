@@ -58,7 +58,7 @@ int match(const Symbol expected, KeySet K)
 * Set -> "set" id "=" Expr {"," id Expr};
 * Incr -> "incr" id;
 * Decr -> "decr" id;
-* Print -> "print" ("bool" Condition | Expr ) {"&" ("bool" Condition | Expr )};
+* Print -> "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )};
 * While → "while" (Condition) "{" Program "}"
 * For → "for" (set "=" Expr {"," id Expr}; Condition; (Set | Incr | Decr); "{" Program "}"
 * If → "if" (Condition) "{" Program ["@" Program] "}"
@@ -74,6 +74,7 @@ void declare(KeySet K)
 {
     if (lex_symbol != DECLARE) {
         write_begin((short) lex_ids_size);
+        write_string("\n");
         program(K);
         return;
     }
@@ -112,7 +113,7 @@ void declare(KeySet K)
     match(EOC, K);
 
     write_begin((short) lex_ids_size);
-
+    write_string("\n");
     program(K);
 }
 
@@ -330,42 +331,50 @@ void read(KeySet K)
 }
 
 
-/* Print -> "print" ("bool" Cond | Expr ) {"&" ("bool" Cond | Expr )}; */
+/* Print -> "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )}; */
 void print(KeySet K)
 {
     match(PRINT, K);
 
-    if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR))) {
-        error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
+    if (!(E lex_symbol & (E CHAR | E BOOL | E VALUE | E ID | E LPAR))) {
+        error("Ocakavany bool, char alebo vyraz", (E CHAR | E BOOL | E VALUE | E ID | E LPAR) | K);
     }
 
     if ((E lex_symbol) & E BOOL) {
         next_symbol();
         condition((E AND) | K);
         write_bool();
+    } else if ((E lex_symbol) & E CHAR) {
+        next_symbol();
+        condition((E AND) | K);
+        write_result_char();
     } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
         condition((E AND) | K);
         write_result();
     }
 
-    check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
+    check("Ocakava sa \"&\"", (E AND) | K);
     while (lex_symbol == AND) {
         next_symbol();
 
         if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR))) {
-            error("Ocakavany BOOL alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
+            error("Ocakavany bool, char alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
         }
 
         if ((E lex_symbol) & E BOOL) {
             next_symbol();
             condition((E AND) | K);
             write_bool();
+        } else if ((E lex_symbol) & E CHAR) {
+            next_symbol();
+            condition((E AND) | K);
+            write_result_char();
         } else if ((E lex_symbol) & (E VALUE | E ID | E LPAR)) {
             condition((E AND) | K);
             write_result();
         }
 
-        check("Ocakava sa \"&\" alebo \"|\"", (E AND) | K);
+        check("Ocakava sa \"&\"", (E AND) | K);
     }
 
     match(EOC, K);

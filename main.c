@@ -6,7 +6,7 @@
 #include "interpreter.h"
 #include "generator.h"
 
-#define MAX_INPUT_SIZE 300
+#define MAX_INPUT_SIZE 20000
 
 int main(int argc, char **argv)
 {

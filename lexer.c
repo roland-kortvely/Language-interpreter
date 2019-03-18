@@ -20,7 +20,7 @@ const char *SYM_NAMES[] = {
         [AND] = "AND",
         [INCR] = "INCR", [DECR] = "DECR",
         [LT] = "LT", [LE] = "LE", [GT] = "GT", [GE] = "GE", [EQ] = "EQ", [NE] = "NE",
-        [ASSIGN] = "ASSIGN", [BOOL] = "BOOL",
+        [ASSIGN] = "ASSIGN", [BOOL] = "BOOL", [CHAR] = "CHAR",
         [WHILE] = "WHILE", [FOR] = "FOR",
         [IF] = "IF", [ELSE] = "ELSE",
         [DECLARE] = "DECLARE",
@@ -177,6 +177,8 @@ void next_symbol()
                     lex_symbol = SET;
                 } else if (strcmp(id, "bool") == 0) {
                     lex_symbol = BOOL;
+                } else if (strcmp(id, "char") == 0) {
+                    lex_symbol = CHAR;
                 } else if (strcmp(id, "declare") == 0) {
                     lex_symbol = DECLARE;
                 } else if (strcmp(id, "incr") == 0) {

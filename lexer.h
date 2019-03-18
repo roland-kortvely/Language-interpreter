@@ -7,7 +7,7 @@
 /* Typy symbolov - lexikalnych jednotiek */
 typedef enum {
     VALUE,
-    ID, BOOL, AND, EOC,
+    ID, BOOL, CHAR, AND, EOC,
     READ, PRINT,
     PLUS, MINUS, MUL, DIV, POWER,
     LPAR, RPAR, LCB, RCB, LSB, RSB,

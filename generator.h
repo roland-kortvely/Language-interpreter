@@ -16,6 +16,8 @@ void write_end();
 
 void write_result();
 
+void write_result_char();
+
 void write_number(short value);
 
 void write_var(short index);
