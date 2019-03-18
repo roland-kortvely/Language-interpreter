@@ -67,6 +67,7 @@ int match(const Symbol expected, KeySet K)
 * Mul -> Power {("*" | "/") Power}
 * Power -> Term ["^" Power]
 * Term -> VALUE | "(" Expr ")" | ID
+* Exit -> "exit"
 */
 
 /* Declare -> [id{"," id}] Program */
@@ -121,7 +122,7 @@ void declare(KeySet K)
 void program(KeySet K)
 {
     do {
-        check("Ocakava sa prikaz", E EOC | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
+        check("Ocakava sa prikaz", E EXIT | E EOC | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
 
         if (lex_symbol == EOC) {
             next_symbol();
@@ -164,8 +165,12 @@ void command(KeySet K)
         case IF:
             _if(K);
             break;
+        case EXIT:
+            match(EXIT, K);
+            write_exit();
+            break;
         default:
-            error("Ocakavany prikaz", E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
+            error("Ocakavany prikaz", E EXIT | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
             break;
     }
 }

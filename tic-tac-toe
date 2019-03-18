@@ -27,7 +27,11 @@ set square7 = 32;
 set square8 = 32;
 set square9 = 32;
 
-for (set i = 0; i < 9; incr i;) {
+
+print char 84; print char 73; print char 67; print char 45; print char 84; print char 65; print char 67; print char 45; print char 84; print char 79; print char 69;
+print char newline;
+
+for (set i = 0; i <= 9; incr i;) {
 
     print char space;
     print char space;
@@ -149,6 +153,11 @@ for (set i = 0; i < 9; incr i;) {
 
     print char newline;
     print char newline;
+
+     if (i == 9) {
+        print char 69; print char 78; print char 68; print char 33;
+        exit
+     }
 
     print char 80;
     print char 76;

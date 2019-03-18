@@ -24,7 +24,7 @@ const char *SYM_NAMES[] = {
         [WHILE] = "WHILE", [FOR] = "FOR",
         [IF] = "IF", [ELSE] = "ELSE",
         [DECLARE] = "DECLARE",
-        [EOC] = "EOC", [SEOF]="SEOF", [SERROR]="SERROR"
+        [EOC] = "EOC", [SEOF]="SEOF", [SERROR]="SERROR", [EXIT] = "EXIT"
 };
 
 /* Globalne premenne, "public" */
@@ -185,6 +185,8 @@ void next_symbol()
                     lex_symbol = INCR;
                 } else if (strcmp(id, "decr") == 0) {
                     lex_symbol = DECR;
+                } else if (strcmp(id, "exit") == 0) {
+                    lex_symbol = EXIT;
                 } else {
                     // Ulozenie do tabulky identifikatorov
                     lex_attr = store_id(id);

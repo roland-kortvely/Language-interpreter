@@ -14,7 +14,7 @@ typedef enum {
     COMMA, INCR, DECR,
     GT, GE, LT, LE, EQ, NE,
     IF, ELSE, WHILE, FOR, ASSIGN,
-    SET, DECLARE, SERROR, SEOF,
+    SET, DECLARE, SERROR, SEOF, EXIT
 } Symbol;
 
 int position;

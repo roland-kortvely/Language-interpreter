@@ -41,7 +41,7 @@ int main(int argc, char **argv)
         error("Ocakavany je koniec suboru", E SEOF);
     }
 
-    write_end();
+    write_exit();
 
     if (errors > 0) {
         printf("\n%s\n", source);

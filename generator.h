@@ -12,7 +12,7 @@ short get_address();
 
 void write_begin(short num_vars);
 
-void write_end();
+void write_exit();
 
 void write_result();
 

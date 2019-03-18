@@ -114,7 +114,7 @@ void write_begin(short num_vars)
     put_op_attr(LDS, 2);
 }
 
-void write_end()
+void write_exit()
 {
     put_word(EXIT);
 }
