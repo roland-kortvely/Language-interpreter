@@ -25,6 +25,7 @@ int main(int argc, char **argv)
         source[i] = (char) c;
     }
 
+    //Lexikalna analyza
     init_lexer(source);
     print_tokens();
 

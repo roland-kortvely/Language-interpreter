@@ -43,6 +43,10 @@ void _for(KeySet K);
 
 void _if(KeySet K);
 
+void _void(KeySet K);
+
+void _exec(KeySet K);
+
 void condition(KeySet K);
 
 void set(KeySet K);

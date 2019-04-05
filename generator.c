@@ -5,9 +5,6 @@
 // Position of additional working memory, something like an additional register you can use.
 #define WORK_MEM (short)0x2
 
-// Position of memory used for power
-//#define WORK_MEM_POW (short)0x2000
-
 // The start of the variables area. It is 3, since you already have JMP, its address and WORK_MEM in memory.
 #define VAR_OFFSET (short)0x3
 // Maximum size of your code,
@@ -248,11 +245,11 @@ void write_power()
 
 void write_ask_var(short index, char *name)
 {
-    char buffer[] = "INP ";
-    strcat(buffer, name);
-    strcat(buffer, " := ");
+    //char buffer[] = "INP ";
+    //strcat(buffer, name);
+    //strcat(buffer, " := ");
 
-    write_string(buffer);
+    //write_string(buffer);
 
     put_word(INP);
     put_op_attr(STA, VAR_OFFSET + index);
@@ -339,6 +336,16 @@ void write_jmp_addr(int address)
     put_op_attr(JMP, (short) address);
 }
 
+void write_jsr_addr(int address)
+{
+    put_op_attr(JSR, (short) address);
+}
+
+void write_rts()
+{
+    put_word(RTS);
+}
+
 void write_flag(short list, short address)
 {
     code_list[list] = address;
@@ -355,18 +362,14 @@ void write_bool()
 
 void write_incr(short index)
 {
-//    put_word(PUSH); //save accum
     put_op_attr(LDA, VAR_OFFSET + index);
     put_op_attr(ADDM, 1);
     put_op_attr(STA, VAR_OFFSET + index);
-//    put_word(POP); //reload accum
 }
 
 void write_decr(short index)
 {
-//    put_word(PUSH); //save accum
     put_op_attr(LDA, VAR_OFFSET + index);
     put_op_attr(SUBM, 1);
     put_op_attr(STA, VAR_OFFSET + index);
-//    put_word(POP); //reload accum
 }

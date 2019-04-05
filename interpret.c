@@ -9,6 +9,8 @@
 
 /*** Syntakticky analyzator a interpretator ***/
 
+short jsr[LEX_POINTERS_MAX];
+
 void error(const char *msg, KeySet K)
 {
     fprintf(stderr, "CHYBA na pozicii %d: %s\n", position, msg);
@@ -73,16 +75,11 @@ int match(const Symbol expected, KeySet K)
 /* Declare -> [id{"," id}] Program */
 void declare(KeySet K)
 {
-    if (lex_symbol != DECLARE) {
-        write_begin((short) lex_ids_size);
-        write_string("\n");
-        program(K);
-        return;
+    if (lex_symbol == DECLARE) {
+        match(DECLARE, K);
+
+        check("Ocakavane ID", (E ID) | K);
     }
-
-    match(DECLARE, K);
-
-    check("Ocakavane ID", (E ID) | K);
 
     if ((E lex_symbol) & E ID) {
 
@@ -109,9 +106,9 @@ void declare(KeySet K)
 
             check("Ocakavana \",\"", E COMMA | E EOC | E ID | K);
         }
-    }
 
-    match(EOC, K);
+        match(EOC, K);
+    }
 
     write_begin((short) lex_ids_size);
     write_string("\n");
@@ -122,7 +119,9 @@ void declare(KeySet K)
 void program(KeySet K)
 {
     do {
-        check("Ocakava sa prikaz", E EXIT | E EOC | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF | K);
+        check("Ocakava sa prikaz",
+              E VOID | E EXEC | E EXIT | E EOC | E READ | E PRINT | E SET | E INCR | E DECR | E WHILE | E FOR | E IF |
+              K);
 
         if (lex_symbol == EOC) {
             next_symbol();
@@ -142,13 +141,13 @@ void command(KeySet K)
 {
     switch (lex_symbol) {
         case READ:
-            read(E COMMA | E EOC | K);
+            read(E COMMA | K);
             break;
         case PRINT:
-            print(E COMMA | E EOC | K);
+            print(E COMMA | K);
             break;
         case SET:
-            set(E COMMA | E EOC | K);
+            set(E COMMA | K);
             break;
         case INCR:
             _incr(K);
@@ -164,6 +163,12 @@ void command(KeySet K)
             break;
         case IF:
             _if(K);
+            break;
+        case VOID:
+            _void(K);
+            break;
+        case EXEC:
+            _exec(K);
             break;
         case EXIT:
             match(EXIT, K);
@@ -289,7 +294,49 @@ void _if(KeySet K)
         match(RCB, K);
     }
 
-    write_flag(branch_2, get_address());
+    write_flag(branch_2, get_address() + 1);
+}
+
+void _void(KeySet K)
+{
+    match(VOID, K);
+
+    check("Ocakava sa pointer", E POINTER | K);
+
+    short _pointer = (short) lex_attr;
+
+    jsr[_pointer] = write_branch_jmp();
+
+//    printf("New pointer addr [%d] = {%d}\n", lex_attr, jsr[_pointer]);
+
+    match(POINTER, K);
+
+    match(LPAR, K);
+    match(RPAR, K);
+
+    match(LCB, K);
+
+
+    program(E RCB | K);
+    write_rts();
+
+    write_flag(jsr[_pointer], get_address());
+
+    match(RCB, K);
+}
+
+void _exec(KeySet K)
+{
+    match(EXEC, K);
+    match(LPAR, K);
+
+    check("Ocakava sa pointer", E POINTER | K);
+
+    write_jsr_addr(jsr[lex_attr] + 1);
+
+    match(POINTER, K);
+    match(RPAR, K);
+    match(EOC, K);
 }
 
 // Read -> "read" ID {"," ID};
@@ -362,7 +409,7 @@ void print(KeySet K)
     while (lex_symbol == AND) {
         next_symbol();
 
-        if (!(E lex_symbol & (E BOOL | E VALUE | E ID | E LPAR))) {
+        if (!(E lex_symbol & (E BOOL | E CHAR | E VALUE | E ID | E LPAR))) {
             error("Ocakavany bool, char alebo vyraz", (E BOOL | E VALUE | E ID | E LPAR) | K);
         }
 
@@ -495,11 +542,11 @@ void term(KeySet K)
             next_symbol();
             expr((E RPAR) | K);
 
-            if ((E lex_symbol) & E RPAR)
+            if ((E lex_symbol) & E RPAR) {
                 match(RPAR, K);
-            else
+            } else {
                 error("Ocakava sa \")\"", (E RPAR) | K);
-
+            }
             break;
         case ID:
             if (flags[lex_attr][0] == 0) {

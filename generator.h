@@ -64,4 +64,8 @@ void write_incr(short index);
 
 void write_decr(short index);
 
+void write_rts();
+
+void write_jsr_addr(int address);
+
 #endif /* GENERATOR_H */

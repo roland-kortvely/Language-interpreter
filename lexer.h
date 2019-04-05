@@ -3,11 +3,13 @@
 
 /* Velkost tabulky identifikatorov */
 #define LEX_IDS_MAX 20
+#define LEX_POINTERS_MAX 20
 
 /* Typy symbolov - lexikalnych jednotiek */
 typedef enum {
     VALUE,
-    ID, BOOL, CHAR, AND, EOC,
+    ID, BOOL, CHAR, AND, EOC, POINTER,
+    VOID, EXEC,
     READ, PRINT,
     PLUS, MINUS, MUL, DIV, POWER,
     LPAR, RPAR, LCB, RCB, LSB, RSB,
@@ -30,6 +32,8 @@ extern int lex_attr;
 
 /* Tabulka identifikatorov */
 extern char *lex_ids[LEX_IDS_MAX];
+extern char *lex_pointers[LEX_POINTERS_MAX];
+extern int lex_pointers_size;
 extern int lex_ids_size; // Pocet ulozenych identifikatorov
 
 /* Inicializacia lex. analyzatora. Parametrom je vstupny retazec. */

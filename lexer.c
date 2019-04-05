@@ -18,6 +18,7 @@ const char *SYM_NAMES[] = {
         [LSB] = "[", [RSB] = "]",
         [COMMA] = "COMMA",
         [AND] = "AND",
+        [POINTER] = "POINTER", [VOID] = "VOID", [EXEC] = "EXEC",
         [INCR] = "INCR", [DECR] = "DECR",
         [LT] = "LT", [LE] = "LE", [GT] = "GT", [GE] = "GE", [EQ] = "EQ", [NE] = "NE",
         [ASSIGN] = "ASSIGN", [BOOL] = "BOOL", [CHAR] = "CHAR",
@@ -33,6 +34,9 @@ int lex_attr;
 
 char *lex_ids[LEX_IDS_MAX];
 int lex_ids_size; // Pocet ulozenych identifikatorov
+
+char *lex_pointers[LEX_POINTERS_MAX];
+int lex_pointers_size; // Pocet ulozenych identifikatorov
 
 
 /* Vstupne premenne */
@@ -62,6 +66,19 @@ int store_id(char *id)
     }
     lex_ids[i] = strdup(id);
     lex_ids_size++;
+    return i;
+}
+
+int store_pointer(char *id)
+{
+    int i = 0;
+    while (i < lex_pointers_size) {
+        if (strcmp(id, lex_pointers[i]) == 0)
+            return i;
+        i++;
+    }
+    lex_pointers[i] = strdup(id);
+    lex_pointers_size++;
     return i;
 }
 
@@ -96,9 +113,9 @@ void next_symbol()
         case '-':
             lex_symbol = MINUS;
             break;
-        case '*':
-            lex_symbol = MUL;
-            break;
+//        case '*':
+//            lex_symbol = MUL;
+//            break;
         case '/':
             lex_symbol = DIV;
             break;
@@ -145,7 +162,7 @@ void next_symbol()
                 //Release char
                 ic--;
 
-            } else if (isalpha(c)) {
+            } else if (isalpha(c) || (c == '*' && isalpha(input[ic]))) {
                 int id_start = ic - 1; // Index zaciatku identifikatora
                 do {
                     c = input[ic];
@@ -187,6 +204,13 @@ void next_symbol()
                     lex_symbol = DECR;
                 } else if (strcmp(id, "exit") == 0) {
                     lex_symbol = EXIT;
+                } else if (strcmp(id, "void") == 0) {
+                    lex_symbol = VOID;
+                } else if (strcmp(id, "exec") == 0) {
+                    lex_symbol = EXEC;
+                } else if (id[0] == '*') {
+                    lex_attr = store_pointer(id);
+                    lex_symbol = POINTER;
                 } else {
                     // Ulozenie do tabulky identifikatorov
                     lex_attr = store_id(id);
@@ -215,6 +239,8 @@ void next_symbol()
                 } else {
                     lex_symbol = GT;
                 }
+            } else if (c == '*') {
+                lex_symbol = MUL;
             } else {
                 lex_symbol = SERROR;
             }
@@ -242,6 +268,10 @@ void print_tokens()
 
         if (lex_symbol == ID) {
             printf(" <%d> -> %s", lex_attr, lex_ids[lex_attr]);
+        }
+
+        if (lex_symbol == POINTER) {
+            printf(" <%d> -> %s", lex_attr, lex_pointers[lex_attr]);
         }
 
         printf("\n");

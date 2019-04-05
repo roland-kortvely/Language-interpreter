@@ -28,8 +28,30 @@ set square8 = 32;
 set square9 = 32;
 
 
-print char 84; print char 73; print char 67; print char 45; print char 84; print char 65; print char 67; print char 45; print char 84; print char 79; print char 69;
+print char 84 &  char 73 &  char 67 &  char 45 &  char 84 &  char 65 &  char 67 &  char 45 &  char 84 &  char 79 &  char 69;
 print char newline;
+
+void *row() {
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char bar;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char bar;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+    print char underscore;
+
+    print char newline;
+}
 
 for (set i = 0; i <= 9; incr i;) {
 
@@ -53,25 +75,7 @@ for (set i = 0; i <= 9; incr i;) {
 
     print char newline;
 
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char bar;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char bar;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-
-    print char newline;
+    exec(*row);
 
     print char space;
     print char space;
@@ -93,25 +97,7 @@ for (set i = 0; i <= 9; incr i;) {
 
     print char newline;
 
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char bar;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char bar;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-    print char underscore;
-
-    print char newline;
+    exec(*row);
 
     print char space;
     print char space;
@@ -155,7 +141,7 @@ for (set i = 0; i <= 9; incr i;) {
     print char newline;
 
      if (i == 9) {
-        print char 69; print char 78; print char 68; print char 33;
+        print char 69 &  char 78 &  char 68 &  char 33;
         exit
      }
 
