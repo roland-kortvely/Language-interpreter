@@ -53,26 +53,28 @@ int match(const Symbol expected, KeySet K)
 
 /* Gramatika:
 *
-* Declare -> [declare id{"," id};] Program
-* Program -> Command {"}" Command}
-* Command -> (Read | Print | Set | While | For | If)
-* Read -> "read" id{"," id};
-* Set -> "set" id "=" Expr {"," id Expr};
-* Incr -> "incr" id;
-* Decr -> "decr" id;
-* Print -> "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )};
+* Declare → [declare id{"," id};] Program
+* Program → Command {"}" Command}
+* Command → (Read | Print | Set | While | For | If)
+* Read → "read" id{"," id};
+* Set → "set" id "=" Expr {"," id Expr};
+* Incr → "incr" id;
+* Decr → "decr" id;
+* Print → "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )};
 * While → "while" (Condition) "{" Program "}"
 * For → "for" (set "=" Expr {"," id Expr}; Condition; (Set | Incr | Decr); "{" Program "}"
-* If → "if" (Condition) "{" Program ["@" Program] "}"
-* Condition -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr]
-* Expr -> Mul {("+" | "-") Mul}
-* Mul -> Power {("*" | "/") Power}
-* Power -> Term ["^" Power]
-* Term -> VALUE | "(" Expr ")" | ID
-* Exit -> "exit"
+* If → "if" (Condition) "{" Program [Program] "}" ["else" "{" Program [Program] "}"]
+* Void → void POINTER () "{" Program [Program] "}"
+* Exec → "exec"(POINTER);
+* Condition → Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr]
+* Expr → Mul {("+" | "-") Mul}
+* Mul → Power {("*" | "/") Power}
+* Power → Term ["^" Power]
+* Term → VALUE | "(" Expr ")" | ID
+* Exit → "exit"
 */
 
-/* Declare -> [id{"," id}] Program */
+/* Declare → [id{"," id}] Program */
 void declare(KeySet K)
 {
     if (lex_symbol == DECLARE) {
@@ -115,7 +117,7 @@ void declare(KeySet K)
     program(K);
 }
 
-/* Program -> Command {"}" Command} */
+/* Program → Command {"}" Command} */
 void program(KeySet K)
 {
     do {
@@ -136,7 +138,7 @@ void program(KeySet K)
     } while (lex_symbol != SEOF && lex_symbol != RCB);
 }
 
-/* Command -> (Read | Print | Set | While | For | If) */
+/* Command → (Read | Print | Set | While | For | If) */
 void command(KeySet K)
 {
     switch (lex_symbol) {
@@ -180,7 +182,7 @@ void command(KeySet K)
     }
 }
 
-/* Incr -> "incr" id; */
+/* Incr → "incr" id; */
 void _incr(KeySet K)
 {
     match(INCR, K);
@@ -190,7 +192,7 @@ void _incr(KeySet K)
     match(EOC, K);
 }
 
-/* Incr -> "decr" id; */
+/* Incr → "decr" id; */
 void _decr(KeySet K)
 {
     match(DECR, K);
@@ -263,7 +265,7 @@ void _for(KeySet K)
     write_flag(_condition_end, get_address());
 }
 
-/* If → "if" (Condition) "{" Program ["@" Program] "}" */
+/* If → "if" (Condition) "{" Program [Program] "}" ["else" "{" Program [Program] "}"] */
 void _if(KeySet K)
 {
     match(IF, K);
@@ -297,6 +299,7 @@ void _if(KeySet K)
     write_flag(branch_2, get_address() + 1);
 }
 
+/* Void → void POINTER () "{" Program [Program] "}"   */
 void _void(KeySet K)
 {
     match(VOID, K);
@@ -325,6 +328,7 @@ void _void(KeySet K)
     match(RCB, K);
 }
 
+/* Exec → "exec"(POINTER); */
 void _exec(KeySet K)
 {
     match(EXEC, K);
@@ -339,7 +343,7 @@ void _exec(KeySet K)
     match(EOC, K);
 }
 
-// Read -> "read" ID {"," ID};
+/* Read → "read" ID {"," ID}; */
 void read(KeySet K)
 {
     match(READ, K);
@@ -383,7 +387,7 @@ void read(KeySet K)
 }
 
 
-/* Print -> "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )}; */
+/* Print → "print" ("bool" Condition | [char] Expr ) {"&" ("bool" Condition | [char] Expr )}; */
 void print(KeySet K)
 {
     match(PRINT, K);
@@ -432,7 +436,7 @@ void print(KeySet K)
     match(EOC, K);
 }
 
-/* Condition -> Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr] */
+/* Condition → Expr [("<" | ">" | "<=" | ">=" | "==" | "!=") Expr] */
 void condition(KeySet K)
 {
     Symbol operator;
@@ -470,7 +474,7 @@ void condition(KeySet K)
     }
 }
 
-/* Set -> "set" id "=" Expr {"," id "=" Expr} */
+/* Set → "set" id "=" Expr {"," id "=" Expr} */
 void set(KeySet K)
 {
     match(SET, K);
@@ -528,7 +532,7 @@ void set(KeySet K)
     match(EOC, K);
 }
 
-/* Term -> VALUE | "(" Expr ")" */
+/* Term → VALUE | "(" Expr ")" */
 void term(KeySet K)
 {
     check("Ocakava sa VALUE, ID alebo \"(\"", E VALUE | E ID | E LPAR | K);
@@ -563,7 +567,7 @@ void term(KeySet K)
     }
 }
 
-/* Power -> Term {"^"  Power} */
+/* Power → Term {"^"  Power} */
 void power(KeySet K)
 {
     Symbol operator;
@@ -588,7 +592,7 @@ void power(KeySet K)
     }
 }
 
-/* Mul -> Power  {("*"|"/")  Power } */
+/* Mul → Power  {("*"|"/")  Power } */
 void mul_div(KeySet K)
 {
     Symbol operator;
@@ -616,7 +620,7 @@ void mul_div(KeySet K)
     }
 }
 
-/* Expr -> Mul {("+" | "-") Mul} */
+/* Expr → Mul {("+" | "-") Mul} */
 void expr(KeySet K)
 {
     Symbol operator;

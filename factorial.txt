@@ -1,0 +1,22 @@
+declare n,f;
+
+set f = 1;
+
+read n;
+
+void *factorial() {
+
+ if (n >=1) {
+
+    set f = f * n;
+    set n = n - 1;
+
+    exec(*factorial);
+ }
+}
+
+exec(*factorial);
+
+print f;
+
+:

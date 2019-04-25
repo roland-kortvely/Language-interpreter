@@ -4,7 +4,7 @@
 #include "lexer.h"
 
 #define KeySet unsigned long long int
-#define E 1ULL <<
+#define E 1ULL << (unsigned)
 
 int errors;
 int *error_position;

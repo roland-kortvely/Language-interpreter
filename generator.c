@@ -212,21 +212,22 @@ void write_power()
     put_op_attr(BZE, (short) (get_address() + 27));
 
     put_op_attr(SUBM, 1);  //A := 2
-    short address = get_address();
+    short addr = get_address();
 
     //CALC:
     //if (A == 0) -> SAVE:
     put_op_attr(BZE, (short) (get_address() + 18));
 
     put_op_attr(STA, WORK_MEM);         //M[W] := 2             // := 1
-    put_op_attr(LDA, WORK_MEM + 1);     //A := M[POW] := 2      // := 4
+
+    put_op_attr(LDA, WORK_MEM + 1);     //A := M[WORK_MEM] := 2 // := 4
     put_op_attr(MUL, WORK_MEM + 2);     //A := 2                // := 2
     put_op_attr(STA, WORK_MEM + 1);     //M[POW] := 2*2 = 4     // := 4 * 2 = 8
     put_op_attr(LDA, WORK_MEM);         //A := M[W] := 2        // := 1
     put_op_attr(SUBM, 1);               //A := 1                // := 0
     put_op_attr(STA, WORK_MEM);         //M[W] := A := 1        // := 0 --> JMP ----v
     //JMP CALC
-    put_op_attr(JMP, address);          //JMP CALC -------------^
+    put_op_attr(JMP, addr);             //JMP CALC -------------^
 
     //SAVE:
     put_op_attr(LDA, WORK_MEM + 1);     //A := 8
@@ -318,27 +319,27 @@ short write_bze_begin()
 {
     put_word(POP);
     put_word(BZE);
-    short address = get_address();
+    short addr = get_address();
     put_word(NOP);
-    return address;
+    return addr;
 }
 
 short write_branch_jmp()
 {
     put_word(JMP);
-    short address = get_address();
+    short addr = get_address();
     put_word(NOP);
-    return address;
+    return addr;
 }
 
-void write_jmp_addr(int address)
+void write_jmp_addr(int addr)
 {
-    put_op_attr(JMP, (short) address);
+    put_op_attr(JMP, (short) addr);
 }
 
-void write_jsr_addr(int address)
+void write_jsr_addr(int addr)
 {
-    put_op_attr(JSR, (short) address);
+    put_op_attr(JSR, (short) addr);
 }
 
 void write_rts()
@@ -346,9 +347,9 @@ void write_rts()
     put_word(RTS);
 }
 
-void write_flag(short list, short address)
+void write_flag(short list, short addr)
 {
-    code_list[list] = address;
+    code_list[list] = addr;
 }
 
 void write_bool()
